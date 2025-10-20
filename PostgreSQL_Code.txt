@@ -1,0 +1,124 @@
+
+
+CREATE TABLE ApplicantData_Cleaned (
+    App_ID INT,
+    Country TEXT,
+    University TEXT,
+    Phone_Number TEXT
+);
+
+COPY ApplicantData_Cleaned
+FROM 'C:\Users\Public\ApplicantData_Cleaned.csv'
+WITH (FORMAT csv, HEADER true);
+
+
+SELECT * FROM ApplicantData_Cleaned LIMIT 10;
+
+
+CREATE TABLE CampaignData_Cleaned (
+    ID TEXT,              -- string type for mixed letters/numbers         
+    Name TEXT,
+    Category TEXT,
+    Intake TEXT,
+    University TEXT,
+    Status TEXT,
+    Start_Date DATE
+);
+
+COPY CampaignData_Cleaned
+FROM 'C:\Users\Public\CampaignData_Cleaned.csv'
+WITH (FORMAT csv, HEADER true);
+
+
+SELECT * FROM CampaignData_Cleaned LIMIT 10;
+
+UPDATE CampaignData_Cleaned
+SET ID = UPPER(ID);
+
+CREATE TABLE OutreachData_Cleaned (
+    Reference_ID INT,
+    Received_At DATE,
+    University TEXT,
+    Caller_Name TEXT,
+    Outcome_1 TEXT,
+    Remark TEXT,
+    Campaign_ID TEXT,
+    Escalation_Required TEXT
+);
+
+
+COPY OutreachData_Cleaned
+FROM 'C:\Users\Public\OutreachData_Cleaned.csv'
+WITH (FORMAT csv, HEADER true);
+
+
+SELECT * FROM OutreachData_Cleaned LIMIT 10;
+
+UPDATE OutreachData_Cleaned
+SET Campaign_ID = UPPER(Campaign_ID);
+
+ALTER TABLE ApplicantData_Cleaned
+ADD CONSTRAINT pk_applicant PRIMARY KEY (App_ID);
+
+
+ALTER TABLE CampaignData_Cleaned
+ADD CONSTRAINT pk_campaign PRIMARY KEY (ID);
+
+
+CREATE OR REPLACE VIEW master_applicant_campaign_outreach AS
+SELECT
+    a.App_ID,
+    a.Country,
+    a.University AS applicant_university,
+    a.Phone_number,
+    o.Reference_ID,
+    o.Received_at,
+    o.University AS outreach_university,
+    o.Caller_Name,
+    o.Outcome_1,
+    o.Remark,
+	o.Campaign_ID,
+    o.Escalation_Required,
+    c.ID AS original_campaign_id,
+    c.Name AS campaign_name,
+    c.Category,
+    c.Intake,
+    c.University AS campaign_university,
+    c.Status,
+    c.Start_Date
+FROM ApplicantData_Cleaned a
+LEFT JOIN OutreachData_Cleaned o
+    ON a.App_ID = o.Reference_ID
+LEFT JOIN CampaignData_Cleaned c
+    ON o.Campaign_ID = c.ID;
+
+
+-- Index on OutreachData.Campaign_ID
+CREATE INDEX idx_outreach_campaign_id
+    ON OutreachData_Cleaned(Campaign_ID);
+
+-- Index on OutreachData.Reference_ID
+CREATE INDEX idx_outreach_reference_id
+    ON OutreachData_Cleaned(Reference_ID);
+
+
+SELECT * FROM master_applicant_campaign_outreach LIMIT 20;
+
+
+
+-- Create a read-only user
+CREATE ROLE ls_reader WITH LOGIN PASSWORD 'Alahly';
+
+-- Replace 'your_db' with your actual database name
+GRANT CONNECT ON DATABASE data_visualization_project TO ls_reader;
+
+-- Grant access to the public schema
+GRANT USAGE ON SCHEMA public TO ls_reader;
+
+-- Grant read-only access to all current tables
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO ls_reader;
+
+-- Ensure future tables are readable too
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON TABLES TO ls_reader;
+
