@@ -1,6 +1,6 @@
 Excelerate Data Analyst Internship
 
-<img width="360" height="360" alt="0x0" src="https://github.com/user-attachments/assets/61b449d4-5e67-4c46-87b7-366850612c4f" />
+<img width="144" height="144" alt="0x0" src="https://github.com/user-attachments/assets/61b449d4-5e67-4c46-87b7-366850612c4f" />
 
 
 One month, great experience, started with a company meeting to provide all the information needed and tasks, and a scheduled meeting every week for updates and feedback. 
